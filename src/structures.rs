@@ -26,42 +26,37 @@ impl MemBlock {
     }
 
     pub fn serialize(self) -> Vec<u8> {
-        let mut sorted_map: BTreeMap<_, _> = self.map.into_iter().collect();
-        let count = sorted_map.len() as u32;
-
-        let mut offset_bytes: Vec<u32> = Vec::new();
-        let mut key_bytes: Vec<KeyCell> = Vec::new();
+        let mut key_offsets: Vec<u32> = Vec::new();
+        let mut keys: Vec<KeyCell> = Vec::new();
         let mut value_bytes: Vec<Vec<u8>> = Vec::new();
 
-        for (k, v) in sorted_map {
-            offset_bytes.push(0);
-            key_bytes.push(KeyCell { key: k, value_offset: 0 });
-            value_bytes.push(v);
-        }
-
+        let sorted_map: BTreeMap<_, _> = self.map.into_iter().collect();
+        let count = sorted_map.len() as u32;
         let mut key_index = 4 * count;
-        for (i, cell) in key_bytes.iter().enumerate() {
-            offset_bytes[i] = key_index;
+        for (k, v) in sorted_map {
+            key_offsets.push(key_index);
+            let cell = KeyCell { key: k, value_offset: 0 };
             key_index += cell.serialized_size() as u32;
+            keys.push(cell);
+            value_bytes.push(v);
         }
 
         let mut value_index = key_index;
         for (i, value_b) in value_bytes.iter().enumerate() {
-            key_bytes[i].value_offset = value_index;
+            keys[i].value_offset = value_index;
             let serialized_size = (value_b.len() + 4) as u32;
             value_index += serialized_size;
         }
 
-        // Write result
         let mut result: Vec<u8> = Vec::new();
         // Offsets
-        for offset in offset_bytes {
+        for offset in key_offsets {
             let bytes = u32_to_bytes(offset);
             result.extend_from_slice(&bytes);
         }
 
         // Keys
-        for key_cell in key_bytes {
+        for key_cell in keys {
             let bytes = u32_to_bytes(key_cell.key.len() as u32);
             result.extend_from_slice(&bytes);
             result.extend(&key_cell.key);
@@ -129,8 +124,8 @@ mod test {
             2,          /* key */
             0,0,0,13,   /* offset of value */
             // Value
-            0,0,0,1,   /* size */
-            3          /* value */
+            0,0,0,1,    /* size */
+            3           /* value */
         );
         assert_eq!(result, expected);
     }
