@@ -3,7 +3,7 @@ struct SST {
 }
 
 impl SST {
-    fn key_size(&self) -> u32 {
+    fn keys_size(&self) -> u32 {
         self.extract_u32(0)
     }
 
@@ -18,6 +18,17 @@ impl SST {
 
     fn key_offset(&self, key_index: u32) -> u32 {
         self.extract_u32((4 + key_index * 4).try_into().unwrap())
+    }
+
+    fn key_size(&self, key_index: u32) -> u32 {
+        let offset = self.key_offset(key_index);
+        self.extract_u32(offset.try_into().unwrap())
+    }
+
+    fn key(&self, key_index: u32) -> &[u8] {
+        let offset: usize = (self.key_offset(key_index) + 4) as usize;
+        let size: usize = self.key_size(key_index) as usize;
+        &self.bytes[offset..offset + size]
     }
 }
 
@@ -40,7 +51,9 @@ mod test {
             3           /* value */
         );
         let sst = SST { bytes };
-        assert_eq!(sst.key_size(), 1);
+        assert_eq!(sst.keys_size(), 1);
         assert_eq!(sst.key_offset(0), 8);
+        assert_eq!(sst.key_size(0), 1);
+        assert_eq!(sst.key(0), vec!(2));
     }
 }
