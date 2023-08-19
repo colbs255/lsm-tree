@@ -32,7 +32,7 @@ impl MemBlock {
 
         let sorted_map: BTreeMap<_, _> = self.map.into_iter().collect();
         let count = sorted_map.len() as u32;
-        let mut key_index = 4 * count;
+        let mut key_index = 4 * (count + 1);
         for (k, v) in sorted_map {
             key_offsets.push(key_index);
             let cell = KeyCell { key: k, value_offset: 0 };
@@ -49,6 +49,9 @@ impl MemBlock {
         }
 
         let mut result: Vec<u8> = Vec::new();
+        // Store number of offsets
+        result.extend_from_slice(&u32_to_bytes(count));
+        println!("{result:?}");
         // Offsets
         for offset in key_offsets {
             let bytes = u32_to_bytes(offset);
@@ -118,11 +121,12 @@ mod test {
         let result = block.serialize();
         let expected = vec!(
             // Offsets
-            0,0,0,4,
+            0,0,0,1,    /* number offsets */
+            0,0,0,8,    /* first offset */
             // Key
             0,0,0,1,    /* size */
             2,          /* key */
-            0,0,0,13,   /* offset of value */
+            0,0,0,17,   /* offset of value */
             // Value
             0,0,0,1,    /* size */
             3           /* value */
