@@ -1,0 +1,3 @@
+= lsm-tree
+
+Trying to fully understand how lsm-tree structures like RocksDb works.
