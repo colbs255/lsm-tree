@@ -28,7 +28,7 @@ impl MemBlock {
     pub fn serialize(self) -> Vec<u8> {
         let mut key_offsets: Vec<u32> = Vec::new();
         let mut keys: Vec<KeyCell> = Vec::new();
-        let mut value_bytes: Vec<Vec<u8>> = Vec::new();
+        let mut values: Vec<Vec<u8>> = Vec::new();
 
         let sorted_map: BTreeMap<_, _> = self.map.into_iter().collect();
         let count = sorted_map.len() as u32;
@@ -38,11 +38,11 @@ impl MemBlock {
             let cell = KeyCell { key: k, value_offset: 0 };
             key_index += cell.serialized_size() as u32;
             keys.push(cell);
-            value_bytes.push(v);
+            values.push(v);
         }
 
         let mut value_index = key_index;
-        for (i, value_b) in value_bytes.iter().enumerate() {
+        for (i, value_b) in values.iter().enumerate() {
             keys[i].value_offset = value_index;
             let serialized_size = (value_b.len() + 4) as u32;
             value_index += serialized_size;
@@ -66,7 +66,7 @@ impl MemBlock {
         }
 
         // Values
-        for v in value_bytes {
+        for v in values {
             let bytes = u32_to_bytes(v.len() as u32);
             result.extend_from_slice(&bytes);
             result.extend(&v);
