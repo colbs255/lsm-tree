@@ -1,7 +1,7 @@
-mod structures;
-mod sst;
+mod model;
 
-use crate::structures::MemBlock;
+use crate::model::memblock::MemBlock;
+use crate::model::sst::SST;
 
 fn main() {
     println!("Hello, world!");
