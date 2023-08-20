@@ -1,9 +1,9 @@
-struct SST {
+pub struct SST {
     bytes: Vec<u8>,
 }
 
 impl SST {
-    fn keys_size(&self) -> u32 {
+    pub fn keys_size(&self) -> u32 {
         self.extract_u32(0)
     }
 
@@ -11,15 +11,16 @@ impl SST {
         self.extract_u32(4 + key_index * 4)
     }
 
+    fn key(&self, key_index: u32) -> &[u8] {
+        let offset = self.key_offset(key_index);
+        self.extract_string(offset)
+    }
+
     fn key_size(&self, key_index: u32) -> u32 {
         let offset = self.key_offset(key_index);
         self.extract_u32(offset)
     }
 
-    fn key(&self, key_index: u32) -> &[u8] {
-        let offset = self.key_offset(key_index);
-        self.extract_string(offset)
-    }
 
     fn get(&self, key: &Vec<u8>) -> Option<&[u8]> {
         for i in 0..self.keys_size() {
